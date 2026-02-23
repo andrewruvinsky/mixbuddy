@@ -1,4 +1,5 @@
 import os
+import csv
 import webbrowser
 from flask import Flask, render_template, send_file
 from threading import Timer
@@ -8,6 +9,22 @@ app = Flask(__name__)
 # Get songs directory
 src_dir = os.path.dirname(os.path.abspath(__file__))
 MUSIC_DIR = os.path.normpath(os.path.join(src_dir, "..", "songs"))
+CSV_PATH = os.path.join(src_dir, "song_analysis.csv")
+
+
+def load_song_data():
+    """Load song analysis data from CSV"""
+    song_data = {}
+    if os.path.exists(CSV_PATH):
+        with open(CSV_PATH, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                song_data[row['filename']] = {
+                    'tempo': row['tempo_bpm'],
+                    'camelot_key': row['camelot_key'],
+                    'key': row['key']
+                }
+    return song_data
 
 
 def get_songs(directory: str) -> list:
@@ -29,7 +46,8 @@ def get_songs(directory: str) -> list:
 def index():
     """Main page showing song list"""
     songs = get_songs(MUSIC_DIR)
-    return render_template('index.html', songs=songs)
+    song_data = load_song_data()
+    return render_template('index.html', songs=songs, song_data=song_data)
 
 
 @app.route('/play/<path:filename>')

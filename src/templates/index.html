@@ -80,6 +80,19 @@
             flex-grow: 1;
         }
         
+        .current-song-details {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-grow: 1;
+        }
+        
+        .current-song-metadata {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
         .recommendation-btn {
             background-color: #5a5a5a;
             color: white;
@@ -237,12 +250,57 @@
         }
         
         .song-name {
-            flex-grow: 1;
             font-size: 14px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            margin-right: 15px;
         }
+        
+        .song-info {
+            display: flex;
+            align-items: center;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+        
+        .camelot-key {
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin-right: 10px;
+            flex-shrink: 0;
+            min-width: 35px;
+            text-align: center;
+        }
+        
+        .tempo {
+            font-size: 13px;
+            font-weight: 600;
+            color: #e0e0e0;
+            background-color: #4a4a4a;
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin-right: 10px;
+            flex-shrink: 0;
+            min-width: 60px;
+            text-align: center;
+        }
+        
+        /* Rainbow colors for Camelot keys */
+        .camelot-1A, .camelot-1B { background-color: #ff0000; color: white; } /* Red */
+        .camelot-2A, .camelot-2B { background-color: #ff4500; color: white; } /* Orange-Red */
+        .camelot-3A, .camelot-3B { background-color: #ff8c00; color: white; } /* Dark Orange */
+        .camelot-4A, .camelot-4B { background-color: #ffd700; color: black; } /* Gold */
+        .camelot-5A, .camelot-5B { background-color: #adff2f; color: black; } /* Green-Yellow */
+        .camelot-6A, .camelot-6B { background-color: #00ff00; color: black; } /* Lime */
+        .camelot-7A, .camelot-7B { background-color: #00fa9a; color: black; } /* Medium Spring Green */
+        .camelot-8A, .camelot-8B { background-color: #00ffff; color: black; } /* Cyan */
+        .camelot-9A, .camelot-9B { background-color: #1e90ff; color: white; } /* Dodger Blue */
+        .camelot-10A, .camelot-10B { background-color: #0000ff; color: white; } /* Blue */
+        .camelot-11A, .camelot-11B { background-color: #8a2be2; color: white; } /* Blue Violet */
+        .camelot-12A, .camelot-12B { background-color: #ff00ff; color: white; } /* Magenta */
         
         .no-songs {
             text-align: center;
@@ -286,7 +344,13 @@
             <h2>Currently Playing</h2>
             <div class="currently-playing-info">
                 <button class="play-btn" onclick="removeSong()" style="background: #c44;">-</button>
-                <div class="current-song-name" id="currentSongName"></div>
+                <div class="current-song-details">
+                    <div class="current-song-name" id="currentSongName"></div>
+                    <div class="current-song-metadata">
+                        <span class="camelot-key" id="currentCamelotKey" style="display: none;"></span>
+                        <span class="tempo" id="currentTempo" style="display: none;"></span>
+                    </div>
+                </div>
                 <button class="recommendation-btn" onclick="getMixRecommendations()">Get Mix Recommendations</button>
             </div>
         </div>
@@ -303,10 +367,18 @@
             <div class="song-list" id="songList">
             {% if songs %}
                 {% for song in songs %}
-                <div class="song-item" data-song="{{ song }}">
+                <div class="song-item" data-song="{{ song }}" data-tempo="{{ song_data.get(song, {}).get('tempo', '') }}" data-camelot="{{ song_data.get(song, {}).get('camelot_key', '') }}">
                     <button class="play-btn" onclick="togglePlay(event, '{{ song }}', this)">▶</button>
                     <button class="add-btn" onclick="selectSong('{{ song }}', this.parentElement)">+</button>
-                    <div class="song-name">{{ song }}</div>
+                    <div class="song-info">
+                        {% if song_data.get(song, {}).get('camelot_key') %}
+                        <span class="camelot-key camelot-{{ song_data.get(song, {}).get('camelot_key', '').replace(' ', '') }}">{{ song_data.get(song, {}).get('camelot_key', '') }}</span>
+                        {% endif %}
+                        {% if song_data.get(song, {}).get('tempo') %}
+                        <span class="tempo">{{ song_data.get(song, {}).get('tempo', '') }} BPM</span>
+                        {% endif %}
+                        <div class="song-name">{{ song.rsplit('.', 1)[0] }}</div>
+                    </div>
                 </div>
                 {% endfor %}
             {% else %}
@@ -326,6 +398,8 @@
         const searchResultsHeader = document.getElementById('searchResultsHeader');
         const currentlyPlaying = document.getElementById('currentlyPlaying');
         const currentSongName = document.getElementById('currentSongName');
+        const currentCamelotKey = document.getElementById('currentCamelotKey');
+        const currentTempo = document.getElementById('currentTempo');
         
         let currentButton = null;
         let currentSong = null;
@@ -333,10 +407,21 @@
         let selectedSongElement = null;
         let selectedAddButton = null;
         
+        // Helper function to remove file extension
+        function removeExtension(filename) {
+            const lastDotIndex = filename.lastIndexOf('.');
+            if (lastDotIndex > 0) {
+                return filename.substring(0, lastDotIndex);
+            }
+            return filename;
+        }
+        
         // Store all songs for search
         const allSongs = Array.from(songList.querySelectorAll('.song-item')).map(item => ({
             element: item,
-            name: item.getAttribute('data-song')
+            name: item.getAttribute('data-song'),
+            tempo: item.getAttribute('data-tempo'),
+            camelot: item.getAttribute('data-camelot')
         }));
         
         function togglePlay(event, songName, button) {
@@ -390,8 +475,29 @@
                 selectedAddButton = addBtn;
             }
             
-            // Update currently playing section
-            currentSongName.textContent = songName;
+            // Get song metadata
+            const tempo = element.getAttribute('data-tempo');
+            const camelot = element.getAttribute('data-camelot');
+            
+            // Update currently playing section (remove extension from display)
+            currentSongName.textContent = removeExtension(songName);
+            
+            // Update key and tempo if available
+            if (camelot) {
+                currentCamelotKey.textContent = camelot;
+                currentCamelotKey.className = 'camelot-key camelot-' + camelot.replace(' ', '');
+                currentCamelotKey.style.display = '';
+            } else {
+                currentCamelotKey.style.display = 'none';
+            }
+            
+            if (tempo) {
+                currentTempo.textContent = tempo + ' BPM';
+                currentTempo.style.display = '';
+            } else {
+                currentTempo.style.display = 'none';
+            }
+            
             currentlyPlaying.classList.add('active');
         }
         
@@ -408,6 +514,8 @@
             selectedSong = null;
             selectedSongElement = null;
             selectedAddButton = null;
+            currentCamelotKey.style.display = 'none';
+            currentTempo.style.display = 'none';
             currentlyPlaying.classList.remove('active');
         }
         
