@@ -25,17 +25,165 @@
         
         h1 {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             font-size: 28px;
             font-weight: bold;
+        }
+        
+        .search-container {
+            margin-bottom: 20px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            background-color: #3a3a3a;
+            color: white;
+            outline: none;
+        }
+        
+        .search-input::placeholder {
+            color: #aaa;
+        }
+        
+        .currently-playing {
+            background-color: #3a3a3a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .currently-playing.active {
+            display: block;
+        }
+        
+        .currently-playing h2 {
+            font-size: 16px;
+            color: #aaa;
+            margin-bottom: 10px;
+        }
+        
+        .currently-playing-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+        
+        .current-song-name {
+            font-size: 18px;
+            font-weight: bold;
+            flex-grow: 1;
+        }
+        
+        .recommendation-btn {
+            background-color: #5a5a5a;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+        }
+        
+        .recommendation-btn:hover {
+            background-color: #6a6a6a;
+        }
+        
+        .recommendation-btn:active {
+            background-color: #4a4a4a;
+        }
+        
+        .search-results {
+            background-color: #2a3a4a;
+            border-radius: 8px;
+            padding: 10px;
+            max-height: 60vh;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            display: none;
+            border: 2px solid #3a4a5a;
+        }
+        
+        .search-results.active {
+            display: block;
+        }
+        
+        .search-results-header {
+            font-size: 14px;
+            color: #aaa;
+            padding: 10px 15px;
+            margin-bottom: 5px;
+        }
+        
+        .search-results .song-item {
+            background-color: #3a4a5a;
+        }
+        
+        .search-results .song-item:hover {
+            background-color: #4a5a6a;
+        }
+        
+        .search-results .song-item.selected {
+            background-color: #2a5a5a;
+        }
+        
+        .search-results .song-item.selected:hover {
+            background-color: #357a7a;
+        }
+        
+        .browse-section {
+            margin-bottom: 20px;
+        }
+        
+        .toggle-list-btn {
+            background-color: #3a3a3a;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            width: 100%;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .toggle-list-btn:hover {
+            background-color: #4a4a4a;
+        }
+        
+        .toggle-arrow {
+            transition: transform 0.3s;
+        }
+        
+        .toggle-arrow.expanded {
+            transform: rotate(180deg);
         }
         
         .song-list {
             background-color: #3a3a3a;
             border-radius: 8px;
             padding: 10px;
-            max-height: 70vh;
+            max-height: 60vh;
             overflow-y: auto;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .song-list.expanded {
+            display: block;
         }
         
         .song-item {
@@ -52,7 +200,16 @@
             background-color: #555555;
         }
         
-        .play-btn {
+        .song-item.selected {
+            background-color: #2a5a2a;
+        }
+        
+        .song-item.selected:hover {
+            background-color: #357a35;
+        }
+        
+        .play-btn,
+        .add-btn {
             background-color: #5a5a5a;
             border: none;
             color: white;
@@ -69,11 +226,13 @@
             flex-shrink: 0;
         }
         
-        .play-btn:hover {
+        .play-btn:hover,
+        .add-btn:hover {
             background-color: #6a6a6a;
         }
         
-        .play-btn:active {
+        .play-btn:active,
+        .add-btn:active {
             background-color: #4a4a4a;
         }
         
@@ -93,38 +252,67 @@
         }
         
         /* Scrollbar styling */
-        .song-list::-webkit-scrollbar {
+        .song-list::-webkit-scrollbar,
+        .search-results::-webkit-scrollbar {
             width: 8px;
         }
         
-        .song-list::-webkit-scrollbar-track {
+        .song-list::-webkit-scrollbar-track,
+        .search-results::-webkit-scrollbar-track {
             background: #3a3a3a;
         }
         
-        .song-list::-webkit-scrollbar-thumb {
+        .song-list::-webkit-scrollbar-thumb,
+        .search-results::-webkit-scrollbar-thumb {
             background: #5a5a5a;
             border-radius: 4px;
         }
         
-        .song-list::-webkit-scrollbar-thumb:hover {
+        .song-list::-webkit-scrollbar-thumb:hover,
+        .search-results::-webkit-scrollbar-thumb:hover {
             background: #6a6a6a;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>MixBuddy - Song Library</h1>
-        <div class="song-list">
+        <h1>MixBuddy</h1>
+        
+        <div class="search-container">
+            <input type="text" class="search-input" id="searchInput" placeholder="Search for a song...">
+        </div>
+        
+        <div class="currently-playing" id="currentlyPlaying">
+            <h2>Currently Playing</h2>
+            <div class="currently-playing-info">
+                <button class="play-btn" onclick="removeSong()" style="background: #c44;">-</button>
+                <div class="current-song-name" id="currentSongName"></div>
+                <button class="recommendation-btn" onclick="getMixRecommendations()">Get Mix Recommendations</button>
+            </div>
+        </div>
+        
+        <div class="search-results" id="searchResults">
+            <div class="search-results-header" id="searchResultsHeader"></div>
+        </div>
+        
+        <div class="browse-section">
+            <button class="toggle-list-btn" onclick="toggleSongList()">
+                <span>Browse All Songs</span>
+                <span class="toggle-arrow" id="toggleArrow">▼</span>
+            </button>
+            <div class="song-list" id="songList">
             {% if songs %}
                 {% for song in songs %}
-                <div class="song-item">
-                    <button class="play-btn" onclick="togglePlay('{{ song }}', this)">▶</button>
+                <div class="song-item" data-song="{{ song }}">
+                    <button class="play-btn" onclick="togglePlay(event, '{{ song }}', this)">▶</button>
+                    <button class="add-btn" onclick="selectSong('{{ song }}', this.parentElement)">+</button>
                     <div class="song-name">{{ song }}</div>
                 </div>
                 {% endfor %}
             {% else %}
                 <div class="no-songs">No songs found in songs folder</div>
             {% endif %}
+            </div>
         </div>
     </div>
     
@@ -132,10 +320,28 @@
     
     <script>
         const audioPlayer = document.getElementById('audioPlayer');
+        const searchInput = document.getElementById('searchInput');
+        const songList = document.getElementById('songList');
+        const searchResults = document.getElementById('searchResults');
+        const searchResultsHeader = document.getElementById('searchResultsHeader');
+        const currentlyPlaying = document.getElementById('currentlyPlaying');
+        const currentSongName = document.getElementById('currentSongName');
+        
         let currentButton = null;
         let currentSong = null;
+        let selectedSong = null;
+        let selectedSongElement = null;
+        let selectedAddButton = null;
         
-        function togglePlay(songName, button) {
+        // Store all songs for search
+        const allSongs = Array.from(songList.querySelectorAll('.song-item')).map(item => ({
+            element: item,
+            name: item.getAttribute('data-song')
+        }));
+        
+        function togglePlay(event, songName, button) {
+            event.stopPropagation();
+            
             if (currentSong === songName && !audioPlayer.paused) {
                 // Pause current song
                 audioPlayer.pause();
@@ -155,6 +361,108 @@
                 currentSong = songName;
             }
         }
+        
+        function selectSong(songName, element) {
+            // Get the add button
+            const addBtn = element.querySelector('.add-btn');
+            
+            // If button is already a checkmark, do nothing
+            if (addBtn && addBtn.textContent === '✓') {
+                return;
+            }
+            
+            // Remove previous selection
+            if (selectedSongElement) {
+                selectedSongElement.classList.remove('selected');
+                if (selectedAddButton) {
+                    selectedAddButton.textContent = '+';
+                }
+            }
+            
+            // Set new selection
+            selectedSong = songName;
+            selectedSongElement = element;
+            element.classList.add('selected');
+            
+            // Update the add button to checkmark
+            if (addBtn) {
+                addBtn.textContent = '✓';
+                selectedAddButton = addBtn;
+            }
+            
+            // Update currently playing section
+            currentSongName.textContent = songName;
+            currentlyPlaying.classList.add('active');
+        }
+        
+        function removeSong() {
+            // Remove selection
+            if (selectedSongElement) {
+                selectedSongElement.classList.remove('selected');
+                if (selectedAddButton) {
+                    selectedAddButton.textContent = '+';
+                }
+            }
+            
+            // Clear selection and hide currently playing
+            selectedSong = null;
+            selectedSongElement = null;
+            selectedAddButton = null;
+            currentlyPlaying.classList.remove('active');
+        }
+        
+        function getMixRecommendations() {
+            // Placeholder function - will be implemented later
+            console.log('Get recommendations for:', selectedSong);
+        }
+        
+        function toggleSongList() {
+            const songList = document.getElementById('songList');
+            const toggleArrow = document.getElementById('toggleArrow');
+            
+            songList.classList.toggle('expanded');
+            toggleArrow.classList.toggle('expanded');
+        }
+        
+        // Search functionality
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            
+            if (searchTerm === '') {
+                // Hide search results when search is empty
+                searchResults.classList.remove('active');
+                searchResults.innerHTML = '<div class="search-results-header" id="searchResultsHeader"></div>';
+                return;
+            }
+            
+            // Filter songs based on search term
+            const matches = allSongs.filter(song => 
+                song.name.toLowerCase().includes(searchTerm)
+            );
+            
+            if (matches.length > 0) {
+                // Show search results
+                searchResults.classList.add('active');
+                searchResultsHeader.textContent = `${matches.length} result${matches.length !== 1 ? 's' : ''} found`;
+                
+                // Clear and populate search results
+                searchResults.innerHTML = '<div class="search-results-header">' + searchResultsHeader.textContent + '</div>';
+                
+                matches.forEach(song => {
+                    const clone = song.element.cloneNode(true);
+                    // Update onclick to work with cloned element
+                    const playBtn = clone.querySelector('.play-btn');
+                    playBtn.onclick = function(event) { togglePlay(event, song.name, this); };
+                    const addBtn = clone.querySelector('.add-btn');
+                    addBtn.onclick = function() { selectSong(song.name, this.parentElement); };
+                    searchResults.appendChild(clone);
+                });
+            } else {
+                // Show "no results" message
+                searchResults.classList.add('active');
+                searchResults.innerHTML = '<div class="search-results-header">No results found</div>';
+            }
+        });
         
         // Reset button when audio ends
         audioPlayer.addEventListener('ended', function() {
