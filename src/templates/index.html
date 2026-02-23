@@ -152,6 +152,46 @@
             background-color: #357a7a;
         }
         
+        .recommendations {
+            background-color: #3a3a3a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .recommendations.active {
+            display: block;
+        }
+        
+        .recommendations h2 {
+            font-size: 16px;
+            color: #aaa;
+            margin-bottom: 15px;
+        }
+        
+        .recommendation-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background-color: #4a4a4a;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+        
+        .recommendation-item:hover {
+            background-color: #555555;
+        }
+        
+        .recommendation-rank {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffd700;
+            min-width: 35px;
+            margin-right: 15px;
+        }
+        
         .browse-section {
             margin-bottom: 20px;
         }
@@ -359,6 +399,11 @@
             <div class="search-results-header" id="searchResultsHeader"></div>
         </div>
         
+        <div class="recommendations" id="recommendations">
+            <h2>Mix Recommendations</h2>
+            <div id="recommendationsList"></div>
+        </div>
+        
         <div class="browse-section">
             <button class="toggle-list-btn" onclick="toggleSongList()">
                 <span>Browse All Songs</span>
@@ -400,6 +445,8 @@
         const currentSongName = document.getElementById('currentSongName');
         const currentCamelotKey = document.getElementById('currentCamelotKey');
         const currentTempo = document.getElementById('currentTempo');
+        const recommendationsSection = document.getElementById('recommendations');
+        const recommendationsList = document.getElementById('recommendationsList');
         
         let currentButton = null;
         let currentSong = null;
@@ -517,11 +564,99 @@
             currentCamelotKey.style.display = 'none';
             currentTempo.style.display = 'none';
             currentlyPlaying.classList.remove('active');
+            
+            // Hide recommendations
+            recommendationsSection.classList.remove('active');
         }
         
         function getMixRecommendations() {
-            // Placeholder function - will be implemented later
-            console.log('Get recommendations for:', selectedSong);
+            if (!selectedSong) {
+                console.log('No song selected');
+                return;
+            }
+            
+            // Fetch recommendations from the API
+            fetch('/api/recommendations?song=' + encodeURIComponent(selectedSong))
+                .then(response => response.json())
+                .then(data => {
+                    if (data.recommendations && data.recommendations.length > 0) {
+                        displayRecommendations(data.recommendations);
+                    } else {
+                        recommendationsList.innerHTML = '<div style="color: #aaa; padding: 10px;">No recommendations found</div>';
+                        recommendationsSection.classList.add('active');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching recommendations:', error);
+                    recommendationsList.innerHTML = '<div style="color: #c44; padding: 10px;">Error loading recommendations</div>';
+                });
+        }
+        
+        function displayRecommendations(recommendations) {
+            recommendationsList.innerHTML = '';
+            
+            recommendations.forEach((rec, index) => {
+                const rank = index + 1;
+                const item = document.createElement('div');
+                item.className = 'recommendation-item';
+                item.setAttribute('data-song', rec.filename);
+                item.setAttribute('data-tempo', rec.tempo);
+                item.setAttribute('data-camelot', rec.camelot_key);
+                
+                // Create rank number
+                const rankEl = document.createElement('div');
+                rankEl.className = 'recommendation-rank';
+                rankEl.textContent = rank + '.';
+                
+                // Create play button
+                const playBtn = document.createElement('button');
+                playBtn.className = 'play-btn';
+                playBtn.textContent = '▶';
+                playBtn.onclick = function(event) { togglePlay(event, rec.filename, this); };
+                
+                // Create add button
+                const addBtn = document.createElement('button');
+                addBtn.className = 'add-btn';
+                addBtn.textContent = '+';
+                addBtn.onclick = function() { selectSong(rec.filename, item); };
+                
+                // Create song info container
+                const songInfo = document.createElement('div');
+                songInfo.className = 'song-info';
+                
+                // Add Camelot key
+                if (rec.camelot_key) {
+                    const keyEl = document.createElement('span');
+                    keyEl.className = 'camelot-key camelot-' + rec.camelot_key.replace(' ', '');
+                    keyEl.textContent = rec.camelot_key;
+                    songInfo.appendChild(keyEl);
+                }
+                
+                // Add tempo
+                if (rec.tempo) {
+                    const tempoEl = document.createElement('span');
+                    tempoEl.className = 'tempo';
+                    tempoEl.textContent = rec.tempo + ' BPM';
+                    songInfo.appendChild(tempoEl);
+                }
+                
+                // Add song name (without extension)
+                const nameEl = document.createElement('div');
+                nameEl.className = 'song-name';
+                nameEl.textContent = removeExtension(rec.filename);
+                songInfo.appendChild(nameEl);
+                
+                // Assemble the item
+                item.appendChild(rankEl);
+                item.appendChild(playBtn);
+                item.appendChild(addBtn);
+                item.appendChild(songInfo);
+                
+                recommendationsList.appendChild(item);
+            });
+            
+            // Show recommendations section
+            recommendationsSection.classList.add('active');
         }
         
         function toggleSongList() {
