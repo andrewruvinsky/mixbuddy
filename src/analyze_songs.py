@@ -1,6 +1,9 @@
 import argparse
+import contextlib
 import csv
+import io
 import os
+import sys
 from typing import Dict, Iterable, List
 
 import librosa
@@ -8,6 +11,36 @@ import numpy as np
 
 SUPPORTED_FORMATS = {".mp3", ".wav", ".flac", ".m4a", ".aac"}
 KEY_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+
+CAM_MAJOR = {
+    "B": "1B",
+    "F#": "2B",
+    "C#": "3B",
+    "G#": "4B",
+    "D#": "5B",
+    "A#": "6B",
+    "F": "7B",
+    "C": "8B",
+    "G": "9B",
+    "D": "10B",
+    "A": "11B",
+    "E": "12B",
+}
+
+CAM_MINOR = {
+    "G#": "1A",
+    "D#": "2A",
+    "A#": "3A",
+    "F": "4A",
+    "C": "5A",
+    "G": "6A",
+    "D": "7A",
+    "A": "8A",
+    "E": "9A",
+    "B": "10A",
+    "F#": "11A",
+    "C#": "12A",
+}
 
 MAJOR_PROFILE = np.array(
     [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88],
@@ -49,17 +82,41 @@ def estimate_key(chroma: np.ndarray) -> str:
     return best_key
 
 
+def key_to_camelot(key: str) -> str:
+    try:
+        note, mode = key.split(" ", 1)
+    except ValueError:
+        return ""
+
+    if mode == "major":
+        return CAM_MAJOR.get(note, "")
+    if mode == "minor":
+        return CAM_MINOR.get(note, "")
+    return ""
+
+
 def analyze_song(path: str) -> Dict[str, str]:
-    y, sr = librosa.load(path, mono=True)
-    tempo = librosa.beat.tempo(y=y, sr=sr, aggregate=None)
+    # Suppress low-level mpg123 C library stderr warnings for malformed MP3 tags
+    stderr_fd = sys.stderr.fileno()
+    with open(os.devnull, 'w') as devnull:
+        old_stderr = os.dup(stderr_fd)
+        os.dup2(devnull.fileno(), stderr_fd)
+        try:
+            y, sr = librosa.load(path, mono=True)
+        finally:
+            os.dup2(old_stderr, stderr_fd)
+            os.close(old_stderr)
+    
+    tempo = librosa.feature.tempo(y=y, sr=sr, aggregate=None)
     tempo_value = float(np.median(tempo)) if tempo.size else 0.0
     chroma = librosa.feature.chroma_stft(y=y, sr=sr)
     key = estimate_key(chroma)
+    camelot_key = key_to_camelot(key)
 
     return {
         "filename": os.path.basename(path),
-        "path": path,
-        "tempo_bpm": f"{tempo_value:.2f}",
+        "tempo_bpm": str(int(round(tempo_value))),
+        "camelot_key": camelot_key,
         "key": key,
     }
 
@@ -71,15 +128,15 @@ def analyze_folder(directory: str) -> Iterable[Dict[str, str]]:
         except Exception as exc:
             yield {
                 "filename": os.path.basename(song_path),
-                "path": song_path,
                 "tempo_bpm": "",
+                "camelot_key": "",
                 "key": "",
                 "error": str(exc),
             }
 
 
 def write_csv(rows: Iterable[Dict[str, str]], output_path: str) -> None:
-    fieldnames = ["filename", "path", "tempo_bpm", "key", "error"]
+    fieldnames = ["filename", "tempo_bpm", "camelot_key", "key", "error"]
     with open(output_path, "w", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
@@ -88,14 +145,23 @@ def write_csv(rows: Iterable[Dict[str, str]], output_path: str) -> None:
 
 
 def parse_args() -> argparse.Namespace:
+    src_dir = os.path.dirname(os.path.abspath(__file__))
+    default_directory = os.path.normpath(os.path.join(src_dir, "..", "songs"))
+    default_output = os.path.join(src_dir, "song_analysis.csv")
+
     parser = argparse.ArgumentParser(
-        description="Analyze a folder of songs and extract tempo and key."
+        description="Analyze songs and extract tempo plus Camelot key."
     )
-    parser.add_argument("directory", help="Folder containing the audio files")
+    parser.add_argument(
+        "directory",
+        nargs="?",
+        default=default_directory,
+        help=f"Folder containing the audio files (default: {default_directory})",
+    )
     parser.add_argument(
         "--output",
-        default="song_analysis.csv",
-        help="CSV file path for results (default: song_analysis.csv)",
+        default=default_output,
+        help=f"CSV file path for results (default: {default_output})",
     )
     return parser.parse_args()
 

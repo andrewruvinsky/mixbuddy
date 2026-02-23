@@ -20,7 +20,7 @@ def get_random_songs(songs: list, num_songs: int = 10) -> list:
     return random.sample(songs, num_songs)
 
 if __name__ == "__main__":
-    music_dir = "/Users/andrewruvinsky/Desktop/Andrew's DJ Music"
+    music_dir = "../songs"
     songs = get_songs(music_dir)
     # Case insensitive search 
     query = input("Enter a song name: ").strip()
