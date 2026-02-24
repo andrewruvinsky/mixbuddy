@@ -22,7 +22,8 @@ def load_song_data():
                 song_data[row['filename']] = {
                     'tempo': row['tempo_bpm'],
                     'camelot_key': row['camelot_key'],
-                    'key': row['key']
+                    'key': row['key'],
+                    'mood': row.get('mood', '')
                 }
     return song_data
 
@@ -126,6 +127,7 @@ def get_recommendations(current_song, all_songs_data):
             'tempo': song_tempo,
             'camelot_key': song_key,
             'key': data.get('key', ''),
+            'mood': data.get('mood', ''),
             'score': score,
             'tempo_diff': tempo_distance,
             'key_distance': key_distance

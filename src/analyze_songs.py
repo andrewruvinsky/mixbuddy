@@ -4,7 +4,7 @@ import csv
 import io
 import os
 import sys
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Union
 
 import librosa
 import numpy as np
@@ -95,6 +95,76 @@ def key_to_camelot(key: str) -> str:
     return ""
 
 
+def detect_mood(y: np.ndarray, sr: Union[int, float], tempo: float, key: str) -> str:
+    """Detect mood based on audio features.
+    
+    Moods: Energetic, Uplifting, Dark, Chill, Melancholic, Intense
+    """
+    # Calculate energy (RMS)
+    rms = librosa.feature.rms(y=y)
+    energy = float(np.mean(rms))
+    
+    # Calculate spectral centroid (brightness)
+    spectral_centroid = librosa.feature.spectral_centroid(y=y, sr=sr)
+    brightness = float(np.mean(spectral_centroid))
+    
+    # Normalize brightness (typical range 1000-4000 Hz)
+    brightness_normalized = min(brightness / 3500.0, 1.0)
+    
+    # Determine if key is major or minor
+    is_major = "major" in key.lower()
+    
+    # Classify mood based on features with better balance
+    # Very high tempo (>145) = Energetic (regardless of other factors)
+    if tempo > 145:
+        return "Energetic"
+    
+    # High tempo (>125) with decent energy = Energetic or Intense
+    if tempo > 125:
+        if energy > 0.12:
+            if is_major or brightness_normalized > 0.5:
+                return "Energetic"
+            else:
+                return "Intense"
+    
+    # Medium-high tempo (110-125) - most dance music falls here
+    if tempo >= 110:
+        # Bright and energetic = Uplifting
+        if brightness_normalized > 0.55 and energy > 0.08:
+            return "Uplifting"
+        # Dark and low brightness = Dark
+        if brightness_normalized < 0.3 and energy < 0.11:
+            return "Dark"
+        # High energy, minor = Intense
+        if energy > 0.13 and not is_major:
+            return "Intense"
+        # Medium energy = Energetic (default for this tempo range)
+        return "Energetic"
+    
+    # Medium tempo (95-110)
+    if tempo >= 95:
+        if energy < 0.08:
+            return "Chill"
+        if is_major and brightness_normalized > 0.5:
+            return "Uplifting"
+        if brightness_normalized < 0.3:
+            return "Dark"
+        return "Chill"
+    
+    # Low tempo (<95)
+    if energy < 0.07:
+        return "Chill"
+    if not is_major and brightness_normalized < 0.4:
+        return "Melancholic"
+    if is_major:
+        return "Uplifting"
+    
+    # Final fallback - use brightness and energy to decide
+    if energy > 0.1 and brightness_normalized > 0.4:
+        return "Uplifting"
+    return "Chill"
+
+
 def analyze_song(path: str) -> Dict[str, str]:
     # Suppress low-level mpg123 C library stderr warnings for malformed MP3 tags
     stderr_fd = sys.stderr.fileno()
@@ -112,12 +182,14 @@ def analyze_song(path: str) -> Dict[str, str]:
     chroma = librosa.feature.chroma_stft(y=y, sr=sr)
     key = estimate_key(chroma)
     camelot_key = key_to_camelot(key)
+    mood = detect_mood(y, sr, tempo_value, key)
 
     return {
         "filename": os.path.basename(path),
         "tempo_bpm": str(int(round(tempo_value))),
         "camelot_key": camelot_key,
         "key": key,
+        "mood": mood,
     }
 
 
@@ -131,12 +203,13 @@ def analyze_folder(directory: str) -> Iterable[Dict[str, str]]:
                 "tempo_bpm": "",
                 "camelot_key": "",
                 "key": "",
+                "mood": "",
                 "error": str(exc),
             }
 
 
 def write_csv(rows: Iterable[Dict[str, str]], output_path: str) -> None:
-    fieldnames = ["filename", "tempo_bpm", "camelot_key", "key", "error"]
+    fieldnames = ["filename", "tempo_bpm", "camelot_key", "key", "mood", "error"]
     with open(output_path, "w", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()

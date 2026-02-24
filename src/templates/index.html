@@ -328,6 +328,25 @@
             text-align: center;
         }
         
+        .mood {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 12px;
+            margin-right: 10px;
+            flex-shrink: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Mood colors */
+        .mood-energetic { background-color: #ff4444; color: white; }
+        .mood-uplifting { background-color: #ffaa00; color: white; }
+        .mood-dark { background-color: #2a2a2a; color: #aaa; border: 1px solid #555; }
+        .mood-chill { background-color: #4a9eff; color: white; }
+        .mood-melancholic { background-color: #7755cc; color: white; }
+        .mood-intense { background-color: #cc2222; color: white; }
+        
         /* Rainbow colors for Camelot keys */
         .camelot-1A, .camelot-1B { background-color: #ff0000; color: white; } /* Red */
         .camelot-2A, .camelot-2B { background-color: #ff4500; color: white; } /* Orange-Red */
@@ -389,6 +408,7 @@
                     <div class="current-song-metadata">
                         <span class="camelot-key" id="currentCamelotKey" style="display: none;"></span>
                         <span class="tempo" id="currentTempo" style="display: none;"></span>
+                        <span class="mood" id="currentMood" style="display: none;"></span>
                     </div>
                 </div>
                 <button class="recommendation-btn" onclick="getMixRecommendations()">Get Mix Recommendations</button>
@@ -412,7 +432,7 @@
             <div class="song-list" id="songList">
             {% if songs %}
                 {% for song in songs %}
-                <div class="song-item" data-song="{{ song }}" data-tempo="{{ song_data.get(song, {}).get('tempo', '') }}" data-camelot="{{ song_data.get(song, {}).get('camelot_key', '') }}">
+                <div class="song-item" data-song="{{ song }}" data-tempo="{{ song_data.get(song, {}).get('tempo', '') }}" data-camelot="{{ song_data.get(song, {}).get('camelot_key', '') }}" data-mood="{{ song_data.get(song, {}).get('mood', '') }}">
                     <button class="play-btn" onclick="togglePlay(event, '{{ song }}', this)">▶</button>
                     <button class="add-btn" onclick="selectSong('{{ song }}', this.parentElement)">+</button>
                     <div class="song-info">
@@ -421,6 +441,9 @@
                         {% endif %}
                         {% if song_data.get(song, {}).get('tempo') %}
                         <span class="tempo">{{ song_data.get(song, {}).get('tempo', '') }} BPM</span>
+                        {% endif %}
+                        {% if song_data.get(song, {}).get('mood') %}
+                        <span class="mood mood-{{ song_data.get(song, {}).get('mood', '').lower() }}">{{ song_data.get(song, {}).get('mood', '') }}</span>
                         {% endif %}
                         <div class="song-name">{{ song.rsplit('.', 1)[0] }}</div>
                     </div>
@@ -445,6 +468,7 @@
         const currentSongName = document.getElementById('currentSongName');
         const currentCamelotKey = document.getElementById('currentCamelotKey');
         const currentTempo = document.getElementById('currentTempo');
+        const currentMood = document.getElementById('currentMood');
         const recommendationsSection = document.getElementById('recommendations');
         const recommendationsList = document.getElementById('recommendationsList');
         
@@ -468,7 +492,8 @@
             element: item,
             name: item.getAttribute('data-song'),
             tempo: item.getAttribute('data-tempo'),
-            camelot: item.getAttribute('data-camelot')
+            camelot: item.getAttribute('data-camelot'),
+            mood: item.getAttribute('data-mood')
         }));
         
         function togglePlay(event, songName, button) {
@@ -525,6 +550,7 @@
             // Get song metadata
             const tempo = element.getAttribute('data-tempo');
             const camelot = element.getAttribute('data-camelot');
+            const mood = element.getAttribute('data-mood');
             
             // Update currently playing section (remove extension from display)
             currentSongName.textContent = removeExtension(songName);
@@ -545,6 +571,14 @@
                 currentTempo.style.display = 'none';
             }
             
+            if (mood) {
+                currentMood.textContent = mood;
+                currentMood.className = 'mood mood-' + mood.toLowerCase();
+                currentMood.style.display = '';
+            } else {
+                currentMood.style.display = 'none';
+            }
+            
             currentlyPlaying.classList.add('active');
         }
         
@@ -563,6 +597,7 @@
             selectedAddButton = null;
             currentCamelotKey.style.display = 'none';
             currentTempo.style.display = 'none';
+            currentMood.style.display = 'none';
             currentlyPlaying.classList.remove('active');
             
             // Hide recommendations
@@ -602,6 +637,7 @@
                 item.setAttribute('data-song', rec.filename);
                 item.setAttribute('data-tempo', rec.tempo);
                 item.setAttribute('data-camelot', rec.camelot_key);
+                item.setAttribute('data-mood', rec.mood || '');
                 
                 // Create rank number
                 const rankEl = document.createElement('div');
@@ -638,6 +674,14 @@
                     tempoEl.className = 'tempo';
                     tempoEl.textContent = rec.tempo + ' BPM';
                     songInfo.appendChild(tempoEl);
+                }
+                
+                // Add mood
+                if (rec.mood) {
+                    const moodEl = document.createElement('span');
+                    moodEl.className = 'mood mood-' + rec.mood.toLowerCase();
+                    moodEl.textContent = rec.mood;
+                    songInfo.appendChild(moodEl);
                 }
                 
                 // Add song name (without extension)
