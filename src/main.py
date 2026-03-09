@@ -23,7 +23,7 @@ def load_song_data():
                     'tempo': row['tempo_bpm'],
                     'camelot_key': row['camelot_key'],
                     'key': row['key'],
-                    'mood': row.get('mood', '')
+                    'energy': row.get('energy', '')
                 }
     return song_data
 
@@ -33,21 +33,21 @@ def camelot_distance(key1, key2):
     Returns a distance score where 0 is perfect match, lower is better."""
     if not key1 or not key2:
         return 999  # Invalid keys get worst score
-    
+
     if key1 == key2:
         return 0  # Perfect match
-    
+
     try:
         # Parse Camelot notation (e.g., "8A" -> number=8, letter='A')
         num1 = int(key1[:-1])
         letter1 = key1[-1]
         num2 = int(key2[:-1])
         letter2 = key2[-1]
-        
+
         # Same number, different letter (e.g., 8A <-> 8B) - very compatible
         if num1 == num2 and letter1 != letter2:
             return 1
-        
+
         # Adjacent numbers, same letter (e.g., 8A <-> 7A or 8A <-> 9A)
         if letter1 == letter2:
             diff = abs(num1 - num2)
@@ -59,7 +59,7 @@ def camelot_distance(key1, key2):
                 return 4
             else:
                 return 6 + diff
-        
+
         # Different number and letter - less compatible
         return 8
     except (ValueError, IndexError):
@@ -70,36 +70,46 @@ def get_recommendations(current_song, all_songs_data):
     """Get top 10 song recommendations based on tempo and key similarity."""
     if current_song not in all_songs_data:
         return []
-    
+
     current_data = all_songs_data[current_song]
     current_tempo = current_data.get('tempo')
     current_key = current_data.get('camelot_key')
-    
+
     if not current_tempo or not current_key:
         return []
-    
+
     try:
         current_tempo = int(current_tempo)
     except (ValueError, TypeError):
         return []
-    
+
+    try:
+        current_energy = int(current_data.get('energy', 0))
+    except (ValueError, TypeError):
+        current_energy = 0
+
     # Score all other songs
     recommendations = []
     for song, data in all_songs_data.items():
         if song == current_song:
             continue  # Skip the current song
-        
+
         song_tempo = data.get('tempo')
         song_key = data.get('camelot_key')
-        
+
         if not song_tempo or not song_key:
             continue
-        
+
         try:
             song_tempo = int(song_tempo)
         except (ValueError, TypeError):
             continue
-        
+
+        try:
+            song_energy = int(data.get('energy', 0))
+        except (ValueError, TypeError):
+            song_energy = 0
+
         # Calculate tempo distance considering half-time and double-time mixing
         # Normal tempo difference
         normal_diff = abs(current_tempo - song_tempo)
@@ -107,44 +117,58 @@ def get_recommendations(current_song, all_songs_data):
         halfTime_diff = abs(current_tempo - song_tempo * 2)
         # Double-time: song played at 0.5x speed
         doubleTime_diff = abs(current_tempo - song_tempo / 2)
-        
+
         # Use the best (smallest) difference
         tempo_distance = min(normal_diff, halfTime_diff, doubleTime_diff)
-        
+
         # Skip songs with tempo difference > 12 BPM
         if tempo_distance > 12:
             continue
-        
+
         # Calculate key compatibility
         key_distance = camelot_distance(current_key, song_key)
-        
+
+        # Energy proximity (0-100 scale, lower distance = better)
+        energy_distance = abs(current_energy - song_energy)
+
         # Combined score (lower is better)
-        # Weight key compatibility more heavily for DJ mixing
-        score = (key_distance * 3) + (tempo_distance * 0.2)
-        
+        # Weight key compatibility most heavily, then tempo proximity, then energy
+        score = (key_distance * 3) + (tempo_distance * 0.9) + \
+            (energy_distance * 0.1)
+
         recommendations.append({
             'filename': song,
             'tempo': song_tempo,
             'camelot_key': song_key,
             'key': data.get('key', ''),
-            'mood': data.get('mood', ''),
+            'energy': data.get('energy', ''),
             'score': score,
             'tempo_diff': tempo_distance,
-            'key_distance': key_distance
+            'key_distance': key_distance,
+            'energy_diff': energy_distance
         })
-    
+
     # Sort by score (best first) and return top 10 (or fewer if not enough candidates)
     recommendations.sort(key=lambda x: x['score'])
-    return recommendations[:10]
+    top = recommendations[:10]
+
+    # Convert internal score to a 0-100 mixability percentage
+    # Score 0 = perfect match (100%), worst realistic score ~35 → 0%
+    max_score = 35.0
+    for rec in top:
+        mixability = max(0.0, 1.0 - rec['score'] / max_score) * 100
+        rec['mixability'] = int(round(mixability))
+
+    return top
 
 
 def get_songs(directory: str) -> list:
     """Get list of supported audio files from directory"""
     supported_formats = {'.mp3', '.wav', '.flac', '.m4a', '.aac'}
-    
+
     if not os.path.exists(directory):
         return []
-    
+
     songs = [
         f for f in os.listdir(directory)
         if os.path.isfile(os.path.join(directory, f))
@@ -176,10 +200,10 @@ def api_recommendations():
     current_song = request.args.get('song')
     if not current_song:
         return jsonify({'error': 'No song specified'}), 400
-    
+
     song_data = load_song_data()
     recommendations = get_recommendations(current_song, song_data)
-    
+
     return jsonify({'recommendations': recommendations})
 
 
@@ -191,9 +215,9 @@ def open_browser():
 if __name__ == "__main__":
     # Open browser automatically after starting server
     Timer(1, open_browser).start()
-    
+
     print("Starting MixBuddy...")
     print("Opening browser at http://127.0.0.1:8080")
     print("Press Ctrl+C to quit")
-    
+
     app.run(debug=False, port=8080)
