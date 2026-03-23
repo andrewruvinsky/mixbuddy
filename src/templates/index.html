@@ -80,6 +80,19 @@
             flex-grow: 1;
         }
         
+        .current-song-details {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-grow: 1;
+        }
+        
+        .current-song-metadata {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
         .recommendation-btn {
             background-color: #5a5a5a;
             color: white;
@@ -139,6 +152,57 @@
             background-color: #357a7a;
         }
         
+        .recommendations {
+            background-color: #3a3a3a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .recommendations.active {
+            display: block;
+        }
+        
+        .recommendations h2 {
+            font-size: 16px;
+            color: #aaa;
+            margin-bottom: 15px;
+        }
+        
+        .recommendation-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background-color: #4a4a4a;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+        
+        .recommendation-item:hover {
+            background-color: #555555;
+        }
+        
+        .recommendation-rank {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffd700;
+            min-width: 35px;
+            margin-right: 15px;
+        }
+
+        .mixability {
+            display: inline-block;
+            background-color: #2a7a2a;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        
         .browse-section {
             margin-bottom: 20px;
         }
@@ -184,6 +248,72 @@
         
         .song-list.expanded {
             display: block;
+        }
+        
+        .song-list-header {
+            display: flex;
+            align-items: center;
+            padding: 8px 15px;
+            margin-bottom: 5px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .song-list-header .header-buttons {
+            width: 110px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .song-list-header .header-info {
+            display: flex;
+            align-items: center;
+            flex-grow: 1;
+        }
+        
+        .song-list-header .header-song {
+            flex-grow: 1;
+            margin-right: 15px;
+        }
+        
+        .song-list-header .header-key {
+            min-width: 35px;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        
+        .song-list-header .header-tempo {
+            min-width: 60px;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        
+        .song-list-header .header-energy {
+            min-width: 70px;
+            flex-shrink: 0;
+        }
+        
+        .song-list-header [data-sort] {
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .song-list-header [data-sort]:hover {
+            color: #fff;
+        }
+        
+        .sort-arrow {
+            font-size: 10px;
+            margin-left: 3px;
+            display: inline-block;
+            opacity: 0.4;
+        }
+        
+        .sort-arrow.active {
+            opacity: 1;
         }
         
         .song-item {
@@ -237,12 +367,70 @@
         }
         
         .song-name {
-            flex-grow: 1;
             font-size: 14px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            flex-grow: 1;
+            margin-right: 15px;
         }
+        
+        .song-info {
+            display: flex;
+            align-items: center;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+        
+        .camelot-key {
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin-right: 10px;
+            flex-shrink: 0;
+            min-width: 35px;
+            text-align: center;
+        }
+        
+        .tempo {
+            font-size: 13px;
+            font-weight: 600;
+            color: #e0e0e0;
+            background-color: #4a4a4a;
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin-right: 10px;
+            flex-shrink: 0;
+            min-width: 60px;
+            text-align: center;
+        }
+        
+        .energy {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 12px;
+            flex-shrink: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background-color: #6b3fa0;
+            color: white;
+        }
+        
+        /* Rainbow colors for Camelot keys */
+        .camelot-1A, .camelot-1B { background-color: #ff0000; color: white; } /* Red */
+        .camelot-2A, .camelot-2B { background-color: #ff4500; color: white; } /* Orange-Red */
+        .camelot-3A, .camelot-3B { background-color: #ff8c00; color: white; } /* Dark Orange */
+        .camelot-4A, .camelot-4B { background-color: #ffd700; color: black; } /* Gold */
+        .camelot-5A, .camelot-5B { background-color: #adff2f; color: black; } /* Green-Yellow */
+        .camelot-6A, .camelot-6B { background-color: #00ff00; color: black; } /* Lime */
+        .camelot-7A, .camelot-7B { background-color: #00fa9a; color: black; } /* Medium Spring Green */
+        .camelot-8A, .camelot-8B { background-color: #00ffff; color: black; } /* Cyan */
+        .camelot-9A, .camelot-9B { background-color: #1e90ff; color: white; } /* Dodger Blue */
+        .camelot-10A, .camelot-10B { background-color: #0000ff; color: white; } /* Blue */
+        .camelot-11A, .camelot-11B { background-color: #8a2be2; color: white; } /* Blue Violet */
+        .camelot-12A, .camelot-12B { background-color: #ff00ff; color: white; } /* Magenta */
         
         .no-songs {
             text-align: center;
@@ -286,13 +474,25 @@
             <h2>Currently Playing</h2>
             <div class="currently-playing-info">
                 <button class="play-btn" onclick="removeSong()" style="background: #c44;">-</button>
-                <div class="current-song-name" id="currentSongName"></div>
+                <div class="current-song-details">
+                    <div class="current-song-name" id="currentSongName"></div>
+                    <div class="current-song-metadata">
+                        <span class="camelot-key" id="currentCamelotKey" style="display: none;"></span>
+                        <span class="tempo" id="currentTempo" style="display: none;"></span>
+                        <span class="energy" id="currentEnergy" style="display: none;"></span>
+                    </div>
+                </div>
                 <button class="recommendation-btn" onclick="getMixRecommendations()">Get Mix Recommendations</button>
             </div>
         </div>
         
         <div class="search-results" id="searchResults">
             <div class="search-results-header" id="searchResultsHeader"></div>
+        </div>
+        
+        <div class="recommendations" id="recommendations">
+            <h2>Mix Recommendations</h2>
+            <div id="recommendationsList"></div>
         </div>
         
         <div class="browse-section">
@@ -302,11 +502,31 @@
             </button>
             <div class="song-list" id="songList">
             {% if songs %}
+                <div class="song-list-header">
+                    <div class="header-buttons"></div>
+                    <div class="header-info">
+                        <div class="header-song" data-sort="song" onclick="sortSongList('song')">Song <span class="sort-arrow" id="arrow-song">▲</span></div>
+                        <div class="header-key" data-sort="camelot" onclick="sortSongList('camelot')">Key <span class="sort-arrow" id="arrow-camelot">▲</span></div>
+                        <div class="header-tempo" data-sort="tempo" onclick="sortSongList('tempo')">Tempo <span class="sort-arrow" id="arrow-tempo">▲</span></div>
+                        <div class="header-energy" data-sort="energy" onclick="sortSongList('energy')">Energy <span class="sort-arrow" id="arrow-energy">▲</span></div>
+                    </div>
+                </div>
                 {% for song in songs %}
-                <div class="song-item" data-song="{{ song }}">
+                <div class="song-item" data-song="{{ song }}" data-tempo="{{ song_data.get(song, {}).get('tempo', '') }}" data-camelot="{{ song_data.get(song, {}).get('camelot_key', '') }}" data-energy="{{ song_data.get(song, {}).get('energy', '') }}">
                     <button class="play-btn" onclick="togglePlay(event, '{{ song }}', this)">▶</button>
                     <button class="add-btn" onclick="selectSong('{{ song }}', this.parentElement)">+</button>
-                    <div class="song-name">{{ song }}</div>
+                    <div class="song-info">
+                        <div class="song-name">{{ song.rsplit('.', 1)[0] }}</div>
+                        {% if song_data.get(song, {}).get('camelot_key') %}
+                        <span class="camelot-key camelot-{{ song_data.get(song, {}).get('camelot_key', '').replace(' ', '') }}">{{ song_data.get(song, {}).get('camelot_key', '') }}</span>
+                        {% endif %}
+                        {% if song_data.get(song, {}).get('tempo') %}
+                        <span class="tempo">{{ song_data.get(song, {}).get('tempo', '') }} BPM</span>
+                        {% endif %}
+                        {% if song_data.get(song, {}).get('energy') %}
+                        <span class="energy">{{ song_data.get(song, {}).get('energy', '') }}%</span>
+                        {% endif %}
+                    </div>
                 </div>
                 {% endfor %}
             {% else %}
@@ -326,6 +546,11 @@
         const searchResultsHeader = document.getElementById('searchResultsHeader');
         const currentlyPlaying = document.getElementById('currentlyPlaying');
         const currentSongName = document.getElementById('currentSongName');
+        const currentCamelotKey = document.getElementById('currentCamelotKey');
+        const currentTempo = document.getElementById('currentTempo');
+        const currentEnergy = document.getElementById('currentEnergy');
+        const recommendationsSection = document.getElementById('recommendations');
+        const recommendationsList = document.getElementById('recommendationsList');
         
         let currentButton = null;
         let currentSong = null;
@@ -333,10 +558,22 @@
         let selectedSongElement = null;
         let selectedAddButton = null;
         
+        // Helper function to remove file extension
+        function removeExtension(filename) {
+            const lastDotIndex = filename.lastIndexOf('.');
+            if (lastDotIndex > 0) {
+                return filename.substring(0, lastDotIndex);
+            }
+            return filename;
+        }
+        
         // Store all songs for search
         const allSongs = Array.from(songList.querySelectorAll('.song-item')).map(item => ({
             element: item,
-            name: item.getAttribute('data-song')
+            name: item.getAttribute('data-song'),
+            tempo: item.getAttribute('data-tempo'),
+            camelot: item.getAttribute('data-camelot'),
+            energy: item.getAttribute('data-energy')
         }));
         
         function togglePlay(event, songName, button) {
@@ -390,8 +627,37 @@
                 selectedAddButton = addBtn;
             }
             
-            // Update currently playing section
-            currentSongName.textContent = songName;
+            // Get song metadata
+            const tempo = element.getAttribute('data-tempo');
+            const camelot = element.getAttribute('data-camelot');
+            const energy = element.getAttribute('data-energy');
+            
+            // Update currently playing section (remove extension from display)
+            currentSongName.textContent = removeExtension(songName);
+            
+            // Update key and tempo if available
+            if (camelot) {
+                currentCamelotKey.textContent = camelot;
+                currentCamelotKey.className = 'camelot-key camelot-' + camelot.replace(' ', '');
+                currentCamelotKey.style.display = '';
+            } else {
+                currentCamelotKey.style.display = 'none';
+            }
+            
+            if (tempo) {
+                currentTempo.textContent = tempo + ' BPM';
+                currentTempo.style.display = '';
+            } else {
+                currentTempo.style.display = 'none';
+            }
+            
+            if (energy) {
+                currentEnergy.textContent = energy + '%';
+                currentEnergy.style.display = '';
+            } else {
+                currentEnergy.style.display = 'none';
+            }
+            
             currentlyPlaying.classList.add('active');
         }
         
@@ -408,12 +674,120 @@
             selectedSong = null;
             selectedSongElement = null;
             selectedAddButton = null;
+            currentCamelotKey.style.display = 'none';
+            currentTempo.style.display = 'none';
+            currentEnergy.style.display = 'none';
             currentlyPlaying.classList.remove('active');
+            
+            // Hide recommendations
+            recommendationsSection.classList.remove('active');
         }
         
         function getMixRecommendations() {
-            // Placeholder function - will be implemented later
-            console.log('Get recommendations for:', selectedSong);
+            if (!selectedSong) {
+                console.log('No song selected');
+                return;
+            }
+            
+            // Fetch recommendations from the API
+            fetch('/api/recommendations?song=' + encodeURIComponent(selectedSong))
+                .then(response => response.json())
+                .then(data => {
+                    if (data.recommendations && data.recommendations.length > 0) {
+                        displayRecommendations(data.recommendations);
+                    } else {
+                        recommendationsList.innerHTML = '<div style="color: #aaa; padding: 10px;">No recommendations found</div>';
+                        recommendationsSection.classList.add('active');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching recommendations:', error);
+                    recommendationsList.innerHTML = '<div style="color: #c44; padding: 10px;">Error loading recommendations</div>';
+                });
+        }
+        
+        function displayRecommendations(recommendations) {
+            recommendationsList.innerHTML = '';
+            
+            recommendations.forEach((rec, index) => {
+                const rank = index + 1;
+                const item = document.createElement('div');
+                item.className = 'recommendation-item';
+                item.setAttribute('data-song', rec.filename);
+                item.setAttribute('data-tempo', rec.tempo);
+                item.setAttribute('data-camelot', rec.camelot_key);
+                item.setAttribute('data-energy', rec.energy || '');
+                
+                // Create rank number
+                const rankEl = document.createElement('div');
+                rankEl.className = 'recommendation-rank';
+                rankEl.textContent = rank + '.';
+                
+                // Create play button
+                const playBtn = document.createElement('button');
+                playBtn.className = 'play-btn';
+                playBtn.textContent = '▶';
+                playBtn.onclick = function(event) { togglePlay(event, rec.filename, this); };
+                
+                // Create add button
+                const addBtn = document.createElement('button');
+                addBtn.className = 'add-btn';
+                addBtn.textContent = '+';
+                addBtn.onclick = function() { selectSong(rec.filename, item); };
+                
+                // Create song info container
+                const songInfo = document.createElement('div');
+                songInfo.className = 'song-info';
+                
+                // Add song name first (without extension)
+                const nameEl = document.createElement('div');
+                nameEl.className = 'song-name';
+                nameEl.textContent = removeExtension(rec.filename);
+                songInfo.appendChild(nameEl);
+                
+                // Add Camelot key
+                if (rec.camelot_key) {
+                    const keyEl = document.createElement('span');
+                    keyEl.className = 'camelot-key camelot-' + rec.camelot_key.replace(' ', '');
+                    keyEl.textContent = rec.camelot_key;
+                    songInfo.appendChild(keyEl);
+                }
+                
+                // Add tempo
+                if (rec.tempo) {
+                    const tempoEl = document.createElement('span');
+                    tempoEl.className = 'tempo';
+                    tempoEl.textContent = rec.tempo + ' BPM';
+                    songInfo.appendChild(tempoEl);
+                }
+                
+                // Add energy score
+                if (rec.energy) {
+                    const energyEl = document.createElement('span');
+                    energyEl.className = 'energy';
+                    energyEl.textContent = rec.energy + '%';
+                    songInfo.appendChild(energyEl);
+                }
+
+                // Add mixability score
+                if (rec.mixability !== undefined) {
+                    const mixEl = document.createElement('span');
+                    mixEl.className = 'mixability';
+                    mixEl.textContent = rec.mixability + '% mix';
+                    songInfo.appendChild(mixEl);
+                }
+                
+                // Assemble the item
+                item.appendChild(rankEl);
+                item.appendChild(playBtn);
+                item.appendChild(addBtn);
+                item.appendChild(songInfo);
+                
+                recommendationsList.appendChild(item);
+            });
+            
+            // Show recommendations section
+            recommendationsSection.classList.add('active');
         }
         
         function toggleSongList() {
@@ -422,6 +796,59 @@
             
             songList.classList.toggle('expanded');
             toggleArrow.classList.toggle('expanded');
+        }
+        
+        // Sorting state
+        let currentSortField = null;
+        let currentSortAsc = true;
+        
+        function sortSongList(field) {
+            // Toggle direction if clicking the same column, otherwise default ascending
+            if (currentSortField === field) {
+                currentSortAsc = !currentSortAsc;
+            } else {
+                currentSortField = field;
+                currentSortAsc = true;
+            }
+            
+            // Update arrow indicators
+            document.querySelectorAll('.sort-arrow').forEach(a => {
+                a.classList.remove('active');
+                a.textContent = '▲';
+            });
+            const activeArrow = document.getElementById('arrow-' + field);
+            if (activeArrow) {
+                activeArrow.classList.add('active');
+                activeArrow.textContent = currentSortAsc ? '▲' : '▼';
+            }
+            
+            // Get all song items (skip the header row)
+            const items = Array.from(songList.querySelectorAll('.song-item'));
+            
+            items.sort((a, b) => {
+                let valA, valB;
+                if (field === 'song') {
+                    valA = (a.getAttribute('data-song') || '').toLowerCase();
+                    valB = (b.getAttribute('data-song') || '').toLowerCase();
+                    return currentSortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                } else if (field === 'tempo' || field === 'energy') {
+                    valA = parseFloat(a.getAttribute('data-' + field)) || 0;
+                    valB = parseFloat(b.getAttribute('data-' + field)) || 0;
+                    return currentSortAsc ? valA - valB : valB - valA;
+                } else if (field === 'camelot') {
+                    valA = a.getAttribute('data-camelot') || '';
+                    valB = b.getAttribute('data-camelot') || '';
+                    // Sort numerically by Camelot number, then by letter
+                    const numA = parseInt(valA) || 0, numB = parseInt(valB) || 0;
+                    if (numA !== numB) return currentSortAsc ? numA - numB : numB - numA;
+                    const letA = valA.slice(-1), letB = valB.slice(-1);
+                    return currentSortAsc ? letA.localeCompare(letB) : letB.localeCompare(letA);
+                }
+                return 0;
+            });
+            
+            // Re-append sorted items (header stays first)
+            items.forEach(item => songList.appendChild(item));
         }
         
         // Search functionality
