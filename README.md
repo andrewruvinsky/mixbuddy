@@ -1,4 +1,6 @@
 # mixbuddy
 DJ song selector assistant.
 
-Run with `python src/main.py`
+### How to run
+1. Activate virtual environment `source venv/bin/activate`
+2. Run app `python src/main.py`
