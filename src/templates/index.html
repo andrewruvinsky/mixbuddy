@@ -73,6 +73,36 @@
             justify-content: space-between;
             gap: 20px;
         }
+
+        .currently-playing-radar {
+            display: none;
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid #4a4a4a;
+            gap: 16px;
+            align-items: flex-start;
+            justify-content: flex-start;
+        }
+
+        .currently-playing-radar.active {
+            display: flex;
+        }
+
+        .currently-playing-radar .radar-chart-wrap {
+            min-height: 220px;
+            justify-content: flex-start;
+            flex: 0 0 auto;
+        }
+
+        .currently-playing-radar .radar-legend {
+            margin-top: 0;
+            font-size: 12px;
+            gap: 8px;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            white-space: nowrap;
+        }
         
         .current-song-name {
             font-size: 18px;
@@ -578,6 +608,12 @@
                 </div>
                 <button class="recommendation-btn" onclick="getMixRecommendations()">Get Mix Recommendations</button>
             </div>
+            <div class="currently-playing-radar" id="currentRadarSection">
+                <div class="radar-chart-wrap" id="currentRadarChartWrap">
+                    <div class="radar-loading">Loading song shape...</div>
+                </div>
+                <div class="radar-legend" id="currentRadarLegend"></div>
+            </div>
         </div>
         
         <div class="search-results" id="searchResults">
@@ -621,7 +657,7 @@
                         <span class="energy">{{ song_data.get(song, {}).get('energy', '') }}%</span>
                         {% endif %}
                     </div>
-                    <button class="radar-btn" onclick="openShapeRadar(event, '{{ song }}')" title="View song shape">R</button>
+                    <button class="radar-btn" onclick="openShapeRadar(event, '{{ song }}')" title="View song shape">▲</button>
                 </div>
                 {% endfor %}
             {% else %}
@@ -663,12 +699,16 @@
         const radarTitle = document.getElementById('radarTitle');
         const radarChartWrap = document.getElementById('radarChartWrap');
         const radarLegend = document.getElementById('radarLegend');
+        const currentRadarSection = document.getElementById('currentRadarSection');
+        const currentRadarChartWrap = document.getElementById('currentRadarChartWrap');
+        const currentRadarLegend = document.getElementById('currentRadarLegend');
         
         let currentButton = null;
         let currentSong = null;
         let selectedSong = null;
         let selectedSongElement = null;
         let selectedAddButton = null;
+        let currentRadarRequestToken = 0;
 
         function closeRadarModal() {
             radarModal.classList.remove('active');
@@ -690,31 +730,74 @@
             radarLegend.innerHTML = '';
             radarModal.classList.add('active');
 
-            fetch('/api/song-shape?song=' + encodeURIComponent(songName))
-                .then(response => response.json())
-                .then(data => {
-                    if (data.metrics) {
-                        renderRadarChart(data.metrics);
-                    } else {
-                        const message = data.error || 'Unable to load song shape.';
-                        radarChartWrap.innerHTML = '<div class="radar-error">' + message + '</div>';
-                    }
+            fetchSongShape(songName)
+                .then(metrics => {
+                    renderRadarChart(metrics, radarChartWrap, radarLegend, {
+                        size: 300,
+                        radius: 110,
+                        labelOffset: 26,
+                        fontSize: 12,
+                        dotSize: 4
+                    });
                 })
-                .catch(() => {
-                    radarChartWrap.innerHTML = '<div class="radar-error">Error loading song shape.</div>';
+                .catch(error => {
+                    radarChartWrap.innerHTML = '<div class="radar-error">' + error.message + '</div>';
                 });
         }
 
-        function renderRadarChart(metrics) {
+        function fetchSongShape(songName) {
+            return fetch('/api/song-shape?song=' + encodeURIComponent(songName))
+                .then(response => response.json())
+                .then(data => {
+                    if (data.metrics) {
+                        return data.metrics;
+                    }
+                    throw new Error(data.error || 'Unable to load song shape.');
+                });
+        }
+
+        function loadCurrentSongRadar(songName) {
+            currentRadarRequestToken += 1;
+            const token = currentRadarRequestToken;
+
+            currentRadarSection.classList.add('active');
+            currentRadarChartWrap.innerHTML = '<div class="radar-loading">Loading song shape...</div>';
+            currentRadarLegend.innerHTML = '';
+
+            fetchSongShape(songName)
+                .then(metrics => {
+                    if (token !== currentRadarRequestToken) {
+                        return;
+                    }
+                    renderRadarChart(metrics, currentRadarChartWrap, currentRadarLegend, {
+                        size: 220,
+                        radius: 72,
+                        labelOffset: 22,
+                        fontSize: 11,
+                        dotSize: 3
+                    });
+                })
+                .catch(() => {
+                    if (token !== currentRadarRequestToken) {
+                        return;
+                    }
+                    currentRadarChartWrap.innerHTML = '<div class="radar-error">Error loading song shape.</div>';
+                });
+        }
+
+        function renderRadarChart(metrics, chartWrapEl, legendEl, options = {}) {
             const axes = [
                 { label: 'Energy', value: Number(metrics.energy) || 0 },
                 { label: 'Dynamic Range', value: Number(metrics.dynamic_range) || 0 },
                 { label: 'Pitch Range', value: Number(metrics.pitch_range) || 0 }
             ];
 
-            const size = 300;
+            const size = options.size || 300;
             const center = size / 2;
-            const radius = 110;
+            const radius = options.radius || 110;
+            const labelOffset = options.labelOffset || 26;
+            const fontSize = options.fontSize || 12;
+            const dotSize = options.dotSize || 4;
 
             const pointsForLevel = (level) => {
                 const r = radius * level;
@@ -743,10 +826,10 @@
 
             const labels = axes.map((axis, index) => {
                 const angle = -Math.PI / 2 + (index * 2 * Math.PI / axes.length);
-                const labelRadius = radius + 26;
+                const labelRadius = radius + labelOffset;
                 const x = center + labelRadius * Math.cos(angle);
                 const y = center + labelRadius * Math.sin(angle);
-                return '<text x="' + x.toFixed(2) + '" y="' + y.toFixed(2) + '" fill="#d2dde5" font-size="12" text-anchor="middle" dominant-baseline="middle">' + axis.label + '</text>';
+                return '<text x="' + x.toFixed(2) + '" y="' + y.toFixed(2) + '" fill="#d2dde5" font-size="' + fontSize + '" text-anchor="middle" dominant-baseline="middle">' + axis.label + '</text>';
             }).join('');
 
             const ringPolygons = [0.25, 0.5, 0.75, 1].map(level =>
@@ -758,10 +841,10 @@
                 const r = radius * (Math.max(0, Math.min(100, axis.value)) / 100);
                 const x = center + r * Math.cos(angle);
                 const y = center + r * Math.sin(angle);
-                return '<circle cx="' + x.toFixed(2) + '" cy="' + y.toFixed(2) + '" r="4" fill="#68c0ff" />';
+                return '<circle cx="' + x.toFixed(2) + '" cy="' + y.toFixed(2) + '" r="' + dotSize + '" fill="#68c0ff" />';
             }).join('');
 
-            const svg = '<svg width="300" height="300" viewBox="0 0 300 300" role="img" aria-label="Song shape radar chart">'
+            const svg = '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '" role="img" aria-label="Song shape radar chart">'
                 + ringPolygons
                 + axisLines
                 + '<polygon points="' + valuePoints + '" fill="rgba(104, 192, 255, 0.28)" stroke="#68c0ff" stroke-width="2" />'
@@ -769,8 +852,8 @@
                 + labels
                 + '</svg>';
 
-            radarChartWrap.innerHTML = svg;
-            radarLegend.innerHTML = axes
+            chartWrapEl.innerHTML = svg;
+            legendEl.innerHTML = axes
                 .map(axis => '<span>' + axis.label + ': ' + Math.round(axis.value) + '%</span>')
                 .join('');
         }
@@ -876,6 +959,7 @@
             }
             
             currentlyPlaying.classList.add('active');
+            loadCurrentSongRadar(songName);
         }
         
         function removeSong() {
@@ -894,6 +978,9 @@
             currentCamelotKey.style.display = 'none';
             currentTempo.style.display = 'none';
             currentEnergy.style.display = 'none';
+            currentRadarSection.classList.remove('active');
+            currentRadarChartWrap.innerHTML = '<div class="radar-loading">Loading song shape...</div>';
+            currentRadarLegend.innerHTML = '';
             currentlyPlaying.classList.remove('active');
             
             // Hide recommendations
@@ -954,7 +1041,7 @@
 
                 const radarBtn = document.createElement('button');
                 radarBtn.className = 'radar-btn';
-                radarBtn.textContent = 'R';
+                radarBtn.textContent = '▲';
                 radarBtn.title = 'View song shape';
                 radarBtn.onclick = function(event) { openShapeRadar(event, rec.filename); };
                 
