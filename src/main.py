@@ -4,12 +4,15 @@ import webbrowser
 from flask import Flask, render_template, send_file, jsonify, request
 from threading import Timer
 
+from shape_analysis import analyze_song_shape
+
 app = Flask(__name__)
 
 # Get songs directory
 src_dir = os.path.dirname(os.path.abspath(__file__))
 MUSIC_DIR = os.path.normpath(os.path.join(src_dir, "..", "songs"))
 CSV_PATH = os.path.join(src_dir, "song_analysis.csv")
+shape_cache = {}
 
 
 def load_song_data():
@@ -205,6 +208,28 @@ def api_recommendations():
     recommendations = get_recommendations(current_song, song_data)
 
     return jsonify({'recommendations': recommendations})
+
+
+@app.route('/api/song-shape')
+def api_song_shape():
+    """Get energy/dynamic range/pitch range for one song."""
+    song = request.args.get('song')
+    if not song:
+        return jsonify({'error': 'No song specified'}), 400
+
+    song_path = os.path.join(MUSIC_DIR, song)
+    if not os.path.exists(song_path) or not os.path.isfile(song_path):
+        return jsonify({'error': 'Song not found'}), 404
+
+    if song in shape_cache:
+        return jsonify({'song': song, 'metrics': shape_cache[song]})
+
+    try:
+        metrics = analyze_song_shape(song_path)
+        shape_cache[song] = metrics
+        return jsonify({'song': song, 'metrics': metrics})
+    except Exception as exc:
+        return jsonify({'error': f'Unable to analyze song: {exc}'}), 500
 
 
 def open_browser():
