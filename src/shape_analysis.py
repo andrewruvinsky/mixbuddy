@@ -76,8 +76,56 @@ def calculate_pitch_range_score(y: np.ndarray, sr: int) -> int:
     return int(round(score_0_to_1 * 100.0))
 
 
+def calculate_vocal_presence_score(y: np.ndarray, sr: int) -> int:
+    """Estimate vocal presence as a 0-100 score.
+
+    Measures the proportion of the track with detected melodic/vocal content
+    using fundamental frequency (F0) estimation.
+    """
+    f0 = librosa.yin(
+        y,
+        fmin=float(librosa.note_to_hz("C2")),
+        fmax=float(librosa.note_to_hz("C7")),
+        sr=sr,
+    )
+
+    # Count voiced frames (valid F0 > 0 Hz)
+    voiced_mask = (f0 > 0) & np.isfinite(f0)
+    voiced_count = float(np.sum(voiced_mask))
+    total_frames = float(len(f0))
+
+    if total_frames == 0:
+        return 0
+
+    # Vocal presence as percentage of frames with detected pitch
+    vocal_ratio = voiced_count / total_frames
+    # Typical max ~60% for mixed content
+    score_0_to_1 = _normalize(vocal_ratio, 0.0, 0.6)
+    return int(round(np.clip(score_0_to_1, 0.0, 1.0) * 100.0))
+
+
+def calculate_bass_prominence_score(y: np.ndarray, sr: int) -> int:
+    """Estimate bass prominence as a 0-100 score.
+
+    Measures the proportion of spectral energy in bass frequencies (≤300 Hz)
+    relative to the full spectrum.
+    """
+    S = np.abs(librosa.stft(y, n_fft=2048, hop_length=512))
+    freqs = librosa.fft_frequencies(sr=sr, n_fft=2048)
+
+    # Bass region: frequencies up to 300 Hz
+    bass_mask = freqs <= 300.0
+    bass_energy = float(np.sum(S[bass_mask] ** 2))
+    total_energy = float(np.sum(S ** 2)) + 1e-9
+    bass_ratio = bass_energy / total_energy
+
+    # Typical bass ratio ranges: 0.05 (treble-heavy) to 0.50 (bass-heavy)
+    score_0_to_1 = _normalize(bass_ratio, 0.05, 0.50)
+    return int(round(np.clip(score_0_to_1, 0.0, 1.0) * 100.0))
+
+
 def analyze_song_shape(path: str) -> Dict[str, int]:
-    """Return radar metrics for one song: energy, dynamic range, pitch range."""
+    """Return radar metrics for one song: energy, dynamic range, pitch range, vocal presence, bass prominence."""
     y, sr = load_audio_mono(path)
     tempo = librosa.feature.tempo(y=y, sr=sr, aggregate=None)
     tempo_value = float(np.median(tempo)) if tempo.size else 0.0
@@ -85,9 +133,13 @@ def analyze_song_shape(path: str) -> Dict[str, int]:
     energy = calculate_energy_score(y, sr, tempo_value)
     dynamic_range = calculate_dynamic_range_score(y)
     pitch_range = calculate_pitch_range_score(y, sr)
+    vocal_presence = calculate_vocal_presence_score(y, sr)
+    bass_prominence = calculate_bass_prominence_score(y, sr)
 
     return {
         "energy": int(energy),
         "dynamic_range": int(dynamic_range),
         "pitch_range": int(pitch_range),
+        "vocal_presence": int(vocal_presence),
+        "bass_prominence": int(bass_prominence),
     }

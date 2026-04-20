@@ -787,9 +787,11 @@
 
         function renderRadarChart(metrics, chartWrapEl, legendEl, options = {}) {
             const axes = [
-                { label: 'Energy', value: Number(metrics.energy) || 0 },
-                { label: 'Dynamic Range', value: Number(metrics.dynamic_range) || 0 },
-                { label: 'Pitch Range', value: Number(metrics.pitch_range) || 0 }
+                { label: 'Energy', displayLabel: 'Energy', value: Number(metrics.energy) || 0 },
+                { label: 'DR', displayLabel: 'Dynamic Range', value: Number(metrics.dynamic_range) || 0 },
+                { label: 'Pitch Range', displayLabel: 'Pitch Range', value: Number(metrics.pitch_range) || 0 },
+                { label: 'Vocals', displayLabel: 'Vocal Presence', value: Number(metrics.vocal_presence) || 0 },
+                { label: 'Bass', displayLabel: 'Bass Prominence', value: Number(metrics.bass_prominence) || 0 }
             ];
 
             const size = options.size || 300;
@@ -854,7 +856,7 @@
 
             chartWrapEl.innerHTML = svg;
             legendEl.innerHTML = axes
-                .map(axis => '<span>' + axis.label + ': ' + Math.round(axis.value) + '%</span>')
+                .map(axis => '<span>' + axis.displayLabel + ': ' + Math.round(axis.value) + '%</span>')
                 .join('');
         }
         
@@ -1216,6 +1218,13 @@
             console.error('Error playing audio');
             if (currentButton) {
                 currentButton.textContent = '▶';
+            }
+        });
+        
+        // Close radar modal on ESC key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeRadarModal();
             }
         });
     </script>
