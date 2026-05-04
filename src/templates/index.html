@@ -143,6 +143,46 @@
         .recommendation-btn:active {
             background-color: #4a4a4a;
         }
+
+        .recommendation-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .shuffle-mix-btn {
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            border: none;
+            background-color: #5a5a5a;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            flex-shrink: 0;
+        }
+
+        .shuffle-mix-btn:hover {
+            background-color: #6a6a6a;
+        }
+
+        .shuffle-mix-btn:active {
+            background-color: #4a4a4a;
+        }
+
+        .shuffle-mix-btn svg {
+            display: none;
+        }
+
+        .shuffle-mix-btn .shuffle-icon {
+            font-size: 18px;
+            line-height: 1;
+            display: inline-block;
+        }
         
         .search-results {
             background-color: #2a3a4a;
@@ -606,7 +646,12 @@
                         <span class="energy" id="currentEnergy" style="display: none;"></span>
                     </div>
                 </div>
-                <button class="recommendation-btn" onclick="getMixRecommendations()">Get Mix Recommendations</button>
+                <div class="recommendation-actions">
+                    <button class="recommendation-btn" onclick="getMixRecommendations()">Get Mix Recommendations</button>
+                    <button class="shuffle-mix-btn" type="button" aria-label="Shuffle mix recommendations" title="Shuffle mix recommendations">
+                        <span class="shuffle-icon" aria-hidden="true">🔀</span>
+                    </button>
+                </div>
             </div>
             <div class="currently-playing-radar" id="currentRadarSection">
                 <div class="radar-chart-wrap" id="currentRadarChartWrap">

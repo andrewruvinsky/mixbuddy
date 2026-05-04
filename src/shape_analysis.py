@@ -79,28 +79,20 @@ def calculate_pitch_range_score(y: np.ndarray, sr: int) -> int:
 def calculate_vocal_presence_score(y: np.ndarray, sr: int) -> int:
     """Estimate vocal presence as a 0-100 score.
 
-    Measures the proportion of the track with detected melodic/vocal content
-    using fundamental frequency (F0) estimation.
+    Measures the proportion of spectral energy in vocal frequency range
+    (200-4000 Hz) which is typical for speech and singing.
     """
-    f0 = librosa.yin(
-        y,
-        fmin=float(librosa.note_to_hz("C2")),
-        fmax=float(librosa.note_to_hz("C7")),
-        sr=sr,
-    )
+    S = np.abs(librosa.stft(y, n_fft=2048, hop_length=512))
+    freqs = librosa.fft_frequencies(sr=sr, n_fft=2048)
 
-    # Count voiced frames (valid F0 > 0 Hz)
-    voiced_mask = (f0 > 0) & np.isfinite(f0)
-    voiced_count = float(np.sum(voiced_mask))
-    total_frames = float(len(f0))
+    # Vocal range: 200-4000 Hz (typical human voice range)
+    vocal_mask = (freqs >= 200.0) & (freqs <= 4000.0)
+    vocal_energy = float(np.sum(S[vocal_mask] ** 2))
+    total_energy = float(np.sum(S ** 2)) + 1e-9
+    vocal_ratio = vocal_energy / total_energy
 
-    if total_frames == 0:
-        return 0
-
-    # Vocal presence as percentage of frames with detected pitch
-    vocal_ratio = voiced_count / total_frames
-    # Typical max ~60% for mixed content
-    score_0_to_1 = _normalize(vocal_ratio, 0.0, 0.6)
+    # Typical vocal ratio ranges: 0.05 (instrumental/bass-heavy) to 0.45 (vocal-prominent)
+    score_0_to_1 = _normalize(vocal_ratio, 0.05, 0.45)
     return int(round(np.clip(score_0_to_1, 0.0, 1.0) * 100.0))
 
 
@@ -119,8 +111,8 @@ def calculate_bass_prominence_score(y: np.ndarray, sr: int) -> int:
     total_energy = float(np.sum(S ** 2)) + 1e-9
     bass_ratio = bass_energy / total_energy
 
-    # Typical bass ratio ranges: 0.05 (treble-heavy) to 0.50 (bass-heavy)
-    score_0_to_1 = _normalize(bass_ratio, 0.05, 0.50)
+    # Realistic range: 0.15 (minimal bass) to 0.90 (extremely bass-heavy)
+    score_0_to_1 = _normalize(bass_ratio, 0.15, 0.90)
     return int(round(np.clip(score_0_to_1, 0.0, 1.0) * 100.0))
 
 
