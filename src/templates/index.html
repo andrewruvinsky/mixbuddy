@@ -73,6 +73,36 @@
             justify-content: space-between;
             gap: 20px;
         }
+
+        .currently-playing-radar {
+            display: none;
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid #4a4a4a;
+            gap: 16px;
+            align-items: flex-start;
+            justify-content: flex-start;
+        }
+
+        .currently-playing-radar.active {
+            display: flex;
+        }
+
+        .currently-playing-radar .radar-chart-wrap {
+            min-height: 220px;
+            justify-content: flex-start;
+            flex: 0 0 auto;
+        }
+
+        .currently-playing-radar .radar-legend {
+            margin-top: 0;
+            font-size: 12px;
+            gap: 8px;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            white-space: nowrap;
+        }
         
         .current-song-name {
             font-size: 18px;
@@ -112,6 +142,46 @@
         
         .recommendation-btn:active {
             background-color: #4a4a4a;
+        }
+
+        .recommendation-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .shuffle-mix-btn {
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            border: none;
+            background-color: #5a5a5a;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            flex-shrink: 0;
+        }
+
+        .shuffle-mix-btn:hover {
+            background-color: #6a6a6a;
+        }
+
+        .shuffle-mix-btn:active {
+            background-color: #4a4a4a;
+        }
+
+        .shuffle-mix-btn svg {
+            display: none;
+        }
+
+        .shuffle-mix-btn .shuffle-icon {
+            font-size: 18px;
+            line-height: 1;
+            display: inline-block;
         }
         
         .search-results {
@@ -339,7 +409,8 @@
         }
         
         .play-btn,
-        .add-btn {
+        .add-btn,
+        .radar-btn {
             background-color: #5a5a5a;
             border: none;
             color: white;
@@ -355,14 +426,31 @@
             transition: background-color 0.2s;
             flex-shrink: 0;
         }
+
+        .radar-btn {
+            margin-right: 0;
+            margin-left: 10px;
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            background-color: #376280;
+        }
         
         .play-btn:hover,
-        .add-btn:hover {
+        .add-btn:hover,
+        .radar-btn:hover {
             background-color: #6a6a6a;
+        }
+
+        .radar-btn:hover {
+            background-color: #477ea4;
         }
         
         .play-btn:active,
-        .add-btn:active {
+        .add-btn:active,
+        .radar-btn:active {
             background-color: #4a4a4a;
         }
         
@@ -380,6 +468,82 @@
             align-items: center;
             flex-grow: 1;
             overflow: hidden;
+        }
+
+        .radar-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 1000;
+        }
+
+        .radar-modal.active {
+            display: flex;
+        }
+
+        .radar-modal-content {
+            width: min(420px, 95vw);
+            background: #252f37;
+            border: 1px solid #4f606e;
+            border-radius: 10px;
+            padding: 18px;
+        }
+
+        .radar-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .radar-modal-title {
+            font-size: 16px;
+            font-weight: bold;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .radar-close {
+            border: none;
+            background: #5a5a5a;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .radar-close:hover {
+            background: #6a6a6a;
+        }
+
+        .radar-chart-wrap {
+            display: flex;
+            justify-content: center;
+            min-height: 320px;
+            align-items: center;
+        }
+
+        .radar-loading,
+        .radar-error {
+            color: #c8d6e0;
+            font-size: 14px;
+        }
+
+        .radar-legend {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #cdd5db;
         }
         
         .camelot-key {
@@ -482,7 +646,18 @@
                         <span class="energy" id="currentEnergy" style="display: none;"></span>
                     </div>
                 </div>
-                <button class="recommendation-btn" onclick="getMixRecommendations()">Get Mix Recommendations</button>
+                <div class="recommendation-actions">
+                    <button class="recommendation-btn" onclick="getMixRecommendations()">Get Mix Recommendations</button>
+                    <button class="shuffle-mix-btn" type="button" aria-label="Shuffle mix recommendations" title="Shuffle mix recommendations">
+                        <span class="shuffle-icon" aria-hidden="true">🔀</span>
+                    </button>
+                </div>
+            </div>
+            <div class="currently-playing-radar" id="currentRadarSection">
+                <div class="radar-chart-wrap" id="currentRadarChartWrap">
+                    <div class="radar-loading">Loading song shape...</div>
+                </div>
+                <div class="radar-legend" id="currentRadarLegend"></div>
             </div>
         </div>
         
@@ -527,6 +702,7 @@
                         <span class="energy">{{ song_data.get(song, {}).get('energy', '') }}%</span>
                         {% endif %}
                     </div>
+                    <button class="radar-btn" onclick="openShapeRadar(event, '{{ song }}')" title="View song shape">▲</button>
                 </div>
                 {% endfor %}
             {% else %}
@@ -537,6 +713,19 @@
     </div>
     
     <audio id="audioPlayer" style="display: none;"></audio>
+
+    <div class="radar-modal" id="radarModal" onclick="closeRadarModalOnOverlay(event)">
+        <div class="radar-modal-content">
+            <div class="radar-modal-header">
+                <div class="radar-modal-title" id="radarTitle">Song Shape</div>
+                <button class="radar-close" onclick="closeRadarModal()">×</button>
+            </div>
+            <div class="radar-chart-wrap" id="radarChartWrap">
+                <div class="radar-loading">Loading song shape...</div>
+            </div>
+            <div class="radar-legend" id="radarLegend"></div>
+        </div>
+    </div>
     
     <script>
         const audioPlayer = document.getElementById('audioPlayer');
@@ -551,12 +740,170 @@
         const currentEnergy = document.getElementById('currentEnergy');
         const recommendationsSection = document.getElementById('recommendations');
         const recommendationsList = document.getElementById('recommendationsList');
+        const radarModal = document.getElementById('radarModal');
+        const radarTitle = document.getElementById('radarTitle');
+        const radarChartWrap = document.getElementById('radarChartWrap');
+        const radarLegend = document.getElementById('radarLegend');
+        const currentRadarSection = document.getElementById('currentRadarSection');
+        const currentRadarChartWrap = document.getElementById('currentRadarChartWrap');
+        const currentRadarLegend = document.getElementById('currentRadarLegend');
         
         let currentButton = null;
         let currentSong = null;
         let selectedSong = null;
         let selectedSongElement = null;
         let selectedAddButton = null;
+        let currentRadarRequestToken = 0;
+
+        function closeRadarModal() {
+            radarModal.classList.remove('active');
+        }
+
+        function closeRadarModalOnOverlay(event) {
+            if (event.target === radarModal) {
+                closeRadarModal();
+            }
+        }
+
+        function openShapeRadar(event, songName) {
+            if (event) {
+                event.stopPropagation();
+            }
+
+            radarTitle.textContent = removeExtension(songName) + ' - Song Shape';
+            radarChartWrap.innerHTML = '<div class="radar-loading">Loading song shape...</div>';
+            radarLegend.innerHTML = '';
+            radarModal.classList.add('active');
+
+            fetchSongShape(songName)
+                .then(metrics => {
+                    renderRadarChart(metrics, radarChartWrap, radarLegend, {
+                        size: 300,
+                        radius: 110,
+                        labelOffset: 26,
+                        fontSize: 12,
+                        dotSize: 4
+                    });
+                })
+                .catch(error => {
+                    radarChartWrap.innerHTML = '<div class="radar-error">' + error.message + '</div>';
+                });
+        }
+
+        function fetchSongShape(songName) {
+            return fetch('/api/song-shape?song=' + encodeURIComponent(songName))
+                .then(response => response.json())
+                .then(data => {
+                    if (data.metrics) {
+                        return data.metrics;
+                    }
+                    throw new Error(data.error || 'Unable to load song shape.');
+                });
+        }
+
+        function loadCurrentSongRadar(songName) {
+            currentRadarRequestToken += 1;
+            const token = currentRadarRequestToken;
+
+            currentRadarSection.classList.add('active');
+            currentRadarChartWrap.innerHTML = '<div class="radar-loading">Loading song shape...</div>';
+            currentRadarLegend.innerHTML = '';
+
+            fetchSongShape(songName)
+                .then(metrics => {
+                    if (token !== currentRadarRequestToken) {
+                        return;
+                    }
+                    renderRadarChart(metrics, currentRadarChartWrap, currentRadarLegend, {
+                        size: 220,
+                        radius: 72,
+                        labelOffset: 22,
+                        fontSize: 11,
+                        dotSize: 3
+                    });
+                })
+                .catch(() => {
+                    if (token !== currentRadarRequestToken) {
+                        return;
+                    }
+                    currentRadarChartWrap.innerHTML = '<div class="radar-error">Error loading song shape.</div>';
+                });
+        }
+
+        function renderRadarChart(metrics, chartWrapEl, legendEl, options = {}) {
+            const axes = [
+                { label: 'Energy', displayLabel: 'Energy', value: Number(metrics.energy) || 0 },
+                { label: 'DR', displayLabel: 'Dynamic Range', value: Number(metrics.dynamic_range) || 0 },
+                { label: 'Pitch Range', displayLabel: 'Pitch Range', value: Number(metrics.pitch_range) || 0 },
+                { label: 'Vocals', displayLabel: 'Vocal Presence', value: Number(metrics.vocal_presence) || 0 },
+                { label: 'Bass', displayLabel: 'Bass Prominence', value: Number(metrics.bass_prominence) || 0 }
+            ];
+
+            const size = options.size || 300;
+            const center = size / 2;
+            const radius = options.radius || 110;
+            const labelOffset = options.labelOffset || 26;
+            const fontSize = options.fontSize || 12;
+            const dotSize = options.dotSize || 4;
+
+            const pointsForLevel = (level) => {
+                const r = radius * level;
+                return axes.map((_, index) => {
+                    const angle = -Math.PI / 2 + (index * 2 * Math.PI / axes.length);
+                    const x = center + r * Math.cos(angle);
+                    const y = center + r * Math.sin(angle);
+                    return x.toFixed(2) + ',' + y.toFixed(2);
+                }).join(' ');
+            };
+
+            const valuePoints = axes.map((axis, index) => {
+                const angle = -Math.PI / 2 + (index * 2 * Math.PI / axes.length);
+                const r = radius * (Math.max(0, Math.min(100, axis.value)) / 100);
+                const x = center + r * Math.cos(angle);
+                const y = center + r * Math.sin(angle);
+                return x.toFixed(2) + ',' + y.toFixed(2);
+            }).join(' ');
+
+            const axisLines = axes.map((_, index) => {
+                const angle = -Math.PI / 2 + (index * 2 * Math.PI / axes.length);
+                const x = center + radius * Math.cos(angle);
+                const y = center + radius * Math.sin(angle);
+                return '<line x1="' + center + '" y1="' + center + '" x2="' + x.toFixed(2) + '" y2="' + y.toFixed(2) + '" stroke="#5a6c79" stroke-width="1" />';
+            }).join('');
+
+            const labels = axes.map((axis, index) => {
+                const angle = -Math.PI / 2 + (index * 2 * Math.PI / axes.length);
+                const labelRadius = radius + labelOffset;
+                const x = center + labelRadius * Math.cos(angle);
+                const y = center + labelRadius * Math.sin(angle);
+                return '<text x="' + x.toFixed(2) + '" y="' + y.toFixed(2) + '" fill="#d2dde5" font-size="' + fontSize + '" text-anchor="middle" dominant-baseline="middle">' + axis.label + '</text>';
+            }).join('');
+
+            const ringPolygons = [0.25, 0.5, 0.75, 1].map(level =>
+                '<polygon points="' + pointsForLevel(level) + '" fill="none" stroke="#45545f" stroke-width="1" />'
+            ).join('');
+
+            const valueDots = axes.map((axis, index) => {
+                const angle = -Math.PI / 2 + (index * 2 * Math.PI / axes.length);
+                const r = radius * (Math.max(0, Math.min(100, axis.value)) / 100);
+                const x = center + r * Math.cos(angle);
+                const y = center + r * Math.sin(angle);
+                return '<circle cx="' + x.toFixed(2) + '" cy="' + y.toFixed(2) + '" r="' + dotSize + '" fill="#68c0ff" />';
+            }).join('');
+
+            const svg = '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '" role="img" aria-label="Song shape radar chart">'
+                + ringPolygons
+                + axisLines
+                + '<polygon points="' + valuePoints + '" fill="rgba(104, 192, 255, 0.28)" stroke="#68c0ff" stroke-width="2" />'
+                + valueDots
+                + labels
+                + '</svg>';
+
+            chartWrapEl.innerHTML = svg;
+            legendEl.innerHTML = axes
+                .map(axis => '<span>' + axis.displayLabel + ': ' + Math.round(axis.value) + '%</span>')
+                .join('');
+        }
         
         // Helper function to remove file extension
         function removeExtension(filename) {
@@ -659,6 +1006,7 @@
             }
             
             currentlyPlaying.classList.add('active');
+            loadCurrentSongRadar(songName);
         }
         
         function removeSong() {
@@ -677,6 +1025,9 @@
             currentCamelotKey.style.display = 'none';
             currentTempo.style.display = 'none';
             currentEnergy.style.display = 'none';
+            currentRadarSection.classList.remove('active');
+            currentRadarChartWrap.innerHTML = '<div class="radar-loading">Loading song shape...</div>';
+            currentRadarLegend.innerHTML = '';
             currentlyPlaying.classList.remove('active');
             
             // Hide recommendations
@@ -734,6 +1085,12 @@
                 addBtn.className = 'add-btn';
                 addBtn.textContent = '+';
                 addBtn.onclick = function() { selectSong(rec.filename, item); };
+
+                const radarBtn = document.createElement('button');
+                radarBtn.className = 'radar-btn';
+                radarBtn.textContent = '▲';
+                radarBtn.title = 'View song shape';
+                radarBtn.onclick = function(event) { openShapeRadar(event, rec.filename); };
                 
                 // Create song info container
                 const songInfo = document.createElement('div');
@@ -782,6 +1139,7 @@
                 item.appendChild(playBtn);
                 item.appendChild(addBtn);
                 item.appendChild(songInfo);
+                item.appendChild(radarBtn);
                 
                 recommendationsList.appendChild(item);
             });
@@ -905,6 +1263,13 @@
             console.error('Error playing audio');
             if (currentButton) {
                 currentButton.textContent = '▶';
+            }
+        });
+        
+        // Close radar modal on ESC key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeRadarModal();
             }
         });
     </script>
