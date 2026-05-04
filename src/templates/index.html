@@ -648,7 +648,7 @@
                 </div>
                 <div class="recommendation-actions">
                     <button class="recommendation-btn" onclick="getMixRecommendations()">Get Mix Recommendations</button>
-                    <button class="shuffle-mix-btn" type="button" aria-label="Shuffle mix recommendations" title="Shuffle mix recommendations">
+                    <button class="shuffle-mix-btn" type="button" onclick="shuffleMixRecommendations()" aria-label="Shuffle mix recommendations" title="Shuffle mix recommendations">
                         <span class="shuffle-icon" aria-hidden="true">🔀</span>
                     </button>
                 </div>
@@ -747,6 +747,7 @@
         const currentRadarSection = document.getElementById('currentRadarSection');
         const currentRadarChartWrap = document.getElementById('currentRadarChartWrap');
         const currentRadarLegend = document.getElementById('currentRadarLegend');
+        const songShapeCache = new Map();
         
         let currentButton = null;
         let currentSong = null;
@@ -791,10 +792,15 @@
         }
 
         function fetchSongShape(songName) {
+            if (songShapeCache.has(songName)) {
+                return Promise.resolve(songShapeCache.get(songName));
+            }
+
             return fetch('/api/song-shape?song=' + encodeURIComponent(songName))
                 .then(response => response.json())
                 .then(data => {
                     if (data.metrics) {
+                        songShapeCache.set(songName, data.metrics);
                         return data.metrics;
                     }
                     throw new Error(data.error || 'Unable to load song shape.');
@@ -1004,7 +1010,7 @@
             } else {
                 currentEnergy.style.display = 'none';
             }
-            
+
             currentlyPlaying.classList.add('active');
             loadCurrentSongRadar(songName);
         }
@@ -1055,6 +1061,29 @@
                     console.error('Error fetching recommendations:', error);
                     recommendationsList.innerHTML = '<div style="color: #c44; padding: 10px;">Error loading recommendations</div>';
                 });
+        }
+
+        async function shuffleMixRecommendations() {
+            if (!selectedSong) {
+                console.log('No song selected');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/recommendations/shuffle?song=' + encodeURIComponent(selectedSong));
+                const data = await response.json();
+
+                if (data.recommendations && data.recommendations.length > 0) {
+                    displayRecommendations(data.recommendations);
+                } else {
+                    recommendationsList.innerHTML = '<div style="color: #aaa; padding: 10px;">No compatible shuffle candidates found</div>';
+                    recommendationsSection.classList.add('active');
+                }
+            } catch (error) {
+                console.error('Error fetching shuffled recommendations:', error);
+                recommendationsList.innerHTML = '<div style="color: #c44; padding: 10px;">Error loading shuffled recommendations</div>';
+                recommendationsSection.classList.add('active');
+            }
         }
         
         function displayRecommendations(recommendations) {
